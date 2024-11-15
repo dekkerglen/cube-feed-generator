@@ -1,3 +1,4 @@
+import { create } from 'domain'
 import {
   OutputSchema as RepoEvent,
   isCommit,
@@ -40,7 +41,14 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     const ops = await getOpsByType(evt)
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
     const postsToCreate = ops.posts.creates
-      .filter(this.filterPost)
+      .filter((create) => {
+        // only keep posts that contain a keyword, or are from a user we care about
+        return (
+          keywords.some((keyword) =>
+            create.record.text.toLowerCase().includes(keyword),
+          ) || authorIds.includes(create.author)
+        )
+      })
       .map((create) => {
         // map posts to a db row
         return {
@@ -63,17 +71,5 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
         .onConflict((oc) => oc.doNothing())
         .execute()
     }
-  }
-
-  filterPost(create) {
-    // Check if any of the words match any of the keywords
-    const containsKeyword = keywords.some((keyword) =>
-      create.record.text.toLowerCase().includes(keyword),
-    )
-    // Check if the author is in the list of authorIds
-    const isAuthorMatch = authorIds.includes(create.author)
-
-    // Return true if either condition is met
-    return containsKeyword || isAuthorMatch
   }
 }
