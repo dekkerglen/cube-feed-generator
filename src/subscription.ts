@@ -4,15 +4,23 @@ import {
 } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 
-const keywords = ['mtgcube', 'cubecobra', 'cubecon', 'hedron.network']
-
-const keybigrams = [
-  ['mtg', 'cube'],
-  ['cube', 'cobra'],
-  ['cube', 'con'],
-  ['cube', 'p1p1'],
-  ['cube', 'draft'],
-  ['hedron', 'network'],
+const keywords = [
+  'mtgcube',
+  'mtg cube',
+  'cubecobra',
+  'cube cobra',
+  'cubecon',
+  'hedron.network',
+  'cube p1p1',
+  'cube draft',
+  'hedron network',
+  'vertex mtg',
+  'cube dungeon',
+  'wa cube champs',
+  'california cube championship',
+  'cali cube champs',
+  'capitol cube championship',
+  'bopston cube party',
 ]
 
 const authorIds = [
@@ -58,31 +66,14 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
   }
 
   filterPost(create) {
-    // Split the post text into words, remove punctuation
-    const words = create.record.text
-      .toLowerCase()
-      .split(/\s+/)
-      .map((word) => word.replace(/[.,\/#!$%^&*;:{}=\-_`~()]/g, ''))
-    const bigrams = words
-      .slice(0, -1)
-      .map((word, i) => [word, words[i + 1]])
-      .filter((bigram) => bigram.every((word) => word.length > 2))
-
     // Check if any of the words match any of the keywords
     const containsKeyword = keywords.some((keyword) =>
       create.record.text.toLowerCase().includes(keyword),
-    )
-
-    // Check if any of the bigrams match any of the keybigrams
-    const containsBigram = keybigrams.some((keybigram) =>
-      bigrams.some((bigram) =>
-        bigram.every((word, i) => word === keybigram[i]),
-      ),
     )
     // Check if the author is in the list of authorIds
     const isAuthorMatch = authorIds.includes(create.author)
 
     // Return true if either condition is met
-    return containsKeyword || isAuthorMatch || containsBigram
+    return containsKeyword || isAuthorMatch
   }
 }
