@@ -85,7 +85,24 @@ const run = async () => {
   })
   await agent.login({ identifier: handle, password })
 
-  await agent.api.com.atproto.repo.deleteRecord({
+  let avatarRef: BlobRef | undefined
+  if (avatar) {
+    let encoding: string
+    if (avatar.endsWith('png')) {
+      encoding = 'image/png'
+    } else if (avatar.endsWith('jpg') || avatar.endsWith('jpeg')) {
+      encoding = 'image/jpeg'
+    } else {
+      throw new Error('expected png or jpeg')
+    }
+    const img = await fs.readFile(avatar)
+    const blobRes = await agent.api.com.atproto.repo.uploadBlob(img, {
+      encoding,
+    })
+    avatarRef = blobRes.data.blob
+  }
+
+  await agent.api.com.atproto.repo.putRecord({
     repo: agent.session?.did ?? '',
     collection: ids.AppBskyFeedGenerator,
     rkey: recordName,
