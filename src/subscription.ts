@@ -11,6 +11,7 @@ const keywords = [
   'cubecobra',
   'cubecon',
   'cube con',
+  'cube p1p1',
 ]
 
 const authorIds = [
@@ -20,6 +21,7 @@ const authorIds = [
   'did:plc:lxvz3wb6wmjqyjbbl7nwp3ev', // vertex mtg
   'did:plc:blslolyotcpwvzdoiazprxcg', // cube dungeon
   'did:plc:yumab7xqnjq5mkekiuw2chzz', // wa cube champs
+  'did:plc:htrj3qn4pszn7tc56nxzs5it', // capitol cube championship
 ]
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
@@ -46,7 +48,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
         )
       })
       .map((create) => {
-        // map alf-related posts to a db row
+        // map posts to a db row
         return {
           uri: create.uri,
           cid: create.cid,
