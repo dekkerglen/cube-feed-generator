@@ -4,15 +4,15 @@ import {
 } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 
-const keywords = [
-  'mtgcube',
-  'mtg cube',
-  'cube cobra',
-  'cubecobra',
-  'cubecon',
-  'cube p1p1',
-  'hedron.network',
-  'cube draft',
+const keywords = ['mtgcube', 'cubecobra', 'cubecon', 'hedron.network']
+
+const keybigrams = [
+  ['mtg', 'cube'],
+  ['cube', 'cobra'],
+  ['cube', 'con'],
+  ['cube', 'p1p1'],
+  ['cube', 'draft'],
+  ['hedron', 'network'],
 ]
 
 const authorIds = [
@@ -32,14 +32,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     const ops = await getOpsByType(evt)
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
     const postsToCreate = ops.posts.creates
-      .filter((create) => {
-        // only keep posts that contain a keyword, or are from a user we care about
-        return (
-          keywords.some((keyword) =>
-            create.record.text.toLowerCase().includes(keyword),
-          ) || authorIds.includes(create.author)
-        )
-      })
+      .filter(this.filterPost)
       .map((create) => {
         // map posts to a db row
         return {
@@ -62,5 +55,30 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
         .onConflict((oc) => oc.doNothing())
         .execute()
     }
+  }
+
+  filterPost(create) {
+    // Split the post text into words
+    const words = create.record.text.toLowerCase().split(/\s+/)
+    const bigrams = words
+      .slice(0, -1)
+      .map((word, i) => [word, words[i + 1]])
+      .filter((bigram) => bigram.every((word) => word.length > 2))
+
+    // Check if any of the words match any of the keywords
+    const containsKeyword = keywords.some((keyword) => words.includes(keyword))
+
+    // Check if any of the bigrams match any of the keybigrams
+    const containsBigram = keybigrams.some((keybigram) =>
+      bigrams.some((bigram) =>
+        bigram.every((word, i) => word === keybigram[i]),
+      ),
+    )
+
+    // Check if the author is in the list of authorIds
+    const isAuthorMatch = authorIds.includes(create.author)
+
+    // Return true if either condition is met
+    return containsKeyword || isAuthorMatch || containsBigram
   }
 }
