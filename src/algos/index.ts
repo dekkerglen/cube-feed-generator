@@ -3,12 +3,12 @@ import {
   QueryParams,
   OutputSchema as AlgoOutput,
 } from '../lexicon/types/app/bsky/feed/getFeedSkeleton'
-import * as whatscube from './whats-cube'
+import * as mtgcube from './mtgcube'
 
 type AlgoHandler = (ctx: AppContext, params: QueryParams) => Promise<AlgoOutput>
 
 const algos: Record<string, AlgoHandler> = {
-  [whatscube.shortname]: whatscube.handler,
+  [mtgcube.shortname]: mtgcube.handler,
 }
 
 export default algos
