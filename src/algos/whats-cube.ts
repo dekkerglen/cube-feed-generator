@@ -2,7 +2,7 @@ import { QueryParams } from '../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import { AppContext } from '../config'
 
 // max 15 chars
-export const shortname = 'cube'
+export const shortname = 'whats-cube'
 
 export const handler = async (ctx: AppContext, params: QueryParams) => {
   let builder = ctx.db
@@ -27,6 +27,8 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
   if (last) {
     cursor = new Date(last.indexedAt).getTime().toString(10)
   }
+
+  console.log(feed)
 
   return {
     cursor,
