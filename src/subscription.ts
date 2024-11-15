@@ -4,6 +4,24 @@ import {
 } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 
+const keywords = [
+  'mtgcube',
+  'mtg cube',
+  'cube cobra',
+  'cubecobra',
+  'cubecon',
+  'cube con',
+]
+
+const authorIds = [
+  'did:plc:qqoeudogjlk642cfhcjvyai6', // boston cube party
+  'did:plc:3zmrjky2gnynxe56gnaphsig', // cube cobra
+  'did:plc:o7ukgfsxj57bu62lh7uozhi3', // hedron network
+  'did:plc:lxvz3wb6wmjqyjbbl7nwp3ev', // vertex mtg
+  'did:plc:blslolyotcpwvzdoiazprxcg', // cube dungeon
+  'did:plc:yumab7xqnjq5mkekiuw2chzz', // wa cube champs
+]
+
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
   async handleEvent(evt: RepoEvent) {
     if (!isCommit(evt)) return
@@ -20,8 +38,12 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
     const postsToCreate = ops.posts.creates
       .filter((create) => {
-        // only alf-related posts
-        return create.record.text.toLowerCase().includes('alf')
+        // only keep posts that contain a keyword, or are from a user we care about
+        return (
+          keywords.some((keyword) =>
+            create.record.text.toLowerCase().includes(keyword),
+          ) || authorIds.includes(create.author)
+        )
       })
       .map((create) => {
         // map alf-related posts to a db row
