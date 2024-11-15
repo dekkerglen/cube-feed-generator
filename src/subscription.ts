@@ -10,8 +10,9 @@ const keywords = [
   'cube cobra',
   'cubecobra',
   'cubecon',
-  'cube con',
   'cube p1p1',
+  'hedron.network',
+  'cube draft',
 ]
 
 const authorIds = [
