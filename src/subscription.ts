@@ -58,8 +58,11 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
   }
 
   filterPost(create) {
-    // Split the post text into words
-    const words = create.record.text.toLowerCase().split(/\s+/)
+    // Split the post text into words, remove punctuation
+    const words = create.record.text
+      .toLowerCase()
+      .split(/\s+/)
+      .map((word) => word.replace(/[.,\/#!$%^&*;:{}=\-_`~()]/g, ''))
     const bigrams = words
       .slice(0, -1)
       .map((word, i) => [word, words[i + 1]])
