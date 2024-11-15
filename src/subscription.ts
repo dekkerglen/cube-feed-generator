@@ -69,7 +69,9 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
       .filter((bigram) => bigram.every((word) => word.length > 2))
 
     // Check if any of the words match any of the keywords
-    const containsKeyword = keywords.some((keyword) => words.includes(keyword))
+    const containsKeyword = keywords.some((keyword) =>
+      create.record.text.toLowerCase().includes(keyword),
+    )
 
     // Check if any of the bigrams match any of the keybigrams
     const containsBigram = keybigrams.some((keybigram) =>
@@ -77,7 +79,6 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
         bigram.every((word, i) => word === keybigram[i]),
       ),
     )
-
     // Check if the author is in the list of authorIds
     const isAuthorMatch = authorIds.includes(create.author)
 
