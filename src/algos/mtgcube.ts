@@ -28,8 +28,6 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
     cursor = new Date(last.indexedAt).getTime().toString(10)
   }
 
-  console.log(feed)
-
   return {
     cursor,
     feed,
