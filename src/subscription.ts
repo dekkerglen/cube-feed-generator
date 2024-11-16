@@ -22,6 +22,8 @@ const keywords = [
   'cali cube champs',
   'capitol cube championship',
   'bopston cube party',
+  'vintage cube',
+  'legacy cube',
 ]
 
 const authorIds = [
@@ -41,6 +43,8 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     const ops = await getOpsByType(evt)
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
     const postsToCreate = ops.posts.creates
+      // the post must contain cube
+      .filter((create) => create.record.text.toLowerCase().includes('cube'))
       .filter((create) => {
         // only keep posts that contain a keyword, or are from a user we care about
         return (
