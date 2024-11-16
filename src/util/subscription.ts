@@ -74,20 +74,15 @@ export abstract class FirehoseSubscriptionBase {
   }
 }
 
-export const getOpsByType = async (evt: Commit): Promise<OperationsByType> => {
+export const getCreatePosts = async (
+  evt: Commit,
+): Promise<CreateOp<PostRecord>[]> => {
   const car = await readCar(evt.blocks)
-  const opsByType: OperationsByType = {
-    posts: { creates: [], deletes: [] },
-    reposts: { creates: [], deletes: [] },
-    likes: { creates: [], deletes: [] },
-    follows: { creates: [], deletes: [] },
-  }
+  const posts: CreateOp<PostRecord>[] = []
 
   for (const op of evt.ops) {
     const uri = `at://${evt.repo}/${op.path}`
     const [collection] = op.path.split('/')
-
-    if (op.action === 'update') continue // updates not supported yet
 
     if (op.action === 'create') {
       if (!op.cid) continue
@@ -96,30 +91,12 @@ export const getOpsByType = async (evt: Commit): Promise<OperationsByType> => {
       const record = cborToLexRecord(recordBytes)
       const create = { uri, cid: op.cid.toString(), author: evt.repo }
       if (collection === ids.AppBskyFeedPost && isPost(record)) {
-        opsByType.posts.creates.push({ record, ...create })
-      } else if (collection === ids.AppBskyFeedRepost && isRepost(record)) {
-        opsByType.reposts.creates.push({ record, ...create })
-      } else if (collection === ids.AppBskyFeedLike && isLike(record)) {
-        opsByType.likes.creates.push({ record, ...create })
-      } else if (collection === ids.AppBskyGraphFollow && isFollow(record)) {
-        opsByType.follows.creates.push({ record, ...create })
-      }
-    }
-
-    if (op.action === 'delete') {
-      if (collection === ids.AppBskyFeedPost) {
-        opsByType.posts.deletes.push({ uri })
-      } else if (collection === ids.AppBskyFeedRepost) {
-        opsByType.reposts.deletes.push({ uri })
-      } else if (collection === ids.AppBskyFeedLike) {
-        opsByType.likes.deletes.push({ uri })
-      } else if (collection === ids.AppBskyGraphFollow) {
-        opsByType.follows.deletes.push({ uri })
+        posts.push({ record, ...create })
       }
     }
   }
 
-  return opsByType
+  return posts
 }
 
 type OperationsByType = {
