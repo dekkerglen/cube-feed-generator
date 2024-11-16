@@ -3,7 +3,7 @@ import {
   OutputSchema as RepoEvent,
   isCommit,
 } from './lexicon/types/com/atproto/sync/subscribeRepos'
-import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
+import { FirehoseSubscriptionBase, getCreatePosts } from './util/subscription'
 import { Database } from './db'
 
 const keywords = [
@@ -46,6 +46,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
       const duration =
         (new Date().getTime() - this.startTimestamp.getTime()) / 1000
       console.log(`Processed ${this.numProcessed} posts in ${duration} seconds`)
+
       this.numProcessed = 0
       this.startTimestamp = new Date()
     }, 1000)
@@ -57,10 +58,9 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
   async handleEvent(evt: RepoEvent) {
     if (!isCommit(evt)) return
 
-    const ops = await getOpsByType(evt)
-    const postsToDelete = ops.posts.deletes.map((del) => del.uri)
-    this.numProcessed += postsToDelete.length
-    const postsToCreate = ops.posts.creates
+    const ops = await getCreatePosts(evt)
+    this.numProcessed += ops.length
+    const postsToCreate = ops
       // the post must contain cube
       .filter((create) => create.record.text.toLowerCase().includes('cube'))
       .filter((create) => {
@@ -79,13 +79,6 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
           indexedAt: new Date().toISOString(),
         }
       })
-
-    if (postsToDelete.length > 0) {
-      await this.db
-        .deleteFrom('post')
-        .where('uri', 'in', postsToDelete)
-        .execute()
-    }
     if (postsToCreate.length > 0) {
       await this.db
         .insertInto('post')
