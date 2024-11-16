@@ -4,6 +4,7 @@ import {
   isCommit,
 } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
+import { Database } from './db'
 
 const keywords = [
   'mtgcube',
@@ -37,11 +38,28 @@ const authorIds = [
 ]
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
+  constructor(public db: Database, public service: string) {
+    super(db, service)
+
+    // every second, log the number of posts processed since the last log
+    setInterval(() => {
+      const duration =
+        (new Date().getTime() - this.startTimestamp.getTime()) / 1000
+      console.log(`Processed ${this.numProcessed} posts in ${duration} seconds`)
+      this.numProcessed = 0
+      this.startTimestamp = new Date()
+    }, 1000)
+  }
+
+  numProcessed = 0
+  startTimestamp = new Date()
+
   async handleEvent(evt: RepoEvent) {
     if (!isCommit(evt)) return
 
     const ops = await getOpsByType(evt)
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
+    this.numProcessed += postsToDelete.length
     const postsToCreate = ops.posts.creates
       // the post must contain cube
       .filter((create) => create.record.text.toLowerCase().includes('cube'))
