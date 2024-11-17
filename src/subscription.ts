@@ -3,6 +3,7 @@ import {
   OutputSchema as RepoEvent,
   isCommit,
 } from './lexicon/types/com/atproto/sync/subscribeRepos'
+import { AppBskyGraphDefs, BskyAgent } from '@atproto/api'
 import { FirehoseSubscriptionBase, getCreatePosts } from './util/subscription'
 import { Database } from './db'
 
@@ -27,16 +28,6 @@ const keywords = [
   'legacy cube',
 ]
 
-const authorIds = [
-  'did:plc:qqoeudogjlk642cfhcjvyai6', // boston cube party
-  'did:plc:3zmrjky2gnynxe56gnaphsig', // cube cobra
-  'did:plc:o7ukgfsxj57bu62lh7uozhi3', // hedron network
-  'did:plc:lxvz3wb6wmjqyjbbl7nwp3ev', // vertex mtg
-  'did:plc:blslolyotcpwvzdoiazprxcg', // cube dungeon
-  'did:plc:yumab7xqnjq5mkekiuw2chzz', // wa cube champs
-  'did:plc:htrj3qn4pszn7tc56nxzs5it', // capitol cube championship
-]
-
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
   constructor(public db: Database, public service: string) {
     super(db, service)
@@ -54,6 +45,25 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
   numProcessed = 0
   startTimestamp = new Date()
+  authorIds: string[] = []
+
+  async init() {
+    const agent = new BskyAgent({
+      service: 'https://public.api.bsky.app'
+    })
+    let cursor: string | undefined
+    let members: AppBskyGraphDefs.ListItemView[] = []
+    do {
+      let res = await agent.app.bsky.graph.getList({
+        list: 'at://did:plc:myu2zwvuws3qbqdfoccpqcyh/app.bsky.graph.list/3layzlk6p322l',
+        limit: 30,
+        cursor
+      })
+      cursor = res.data.cursor
+      members = members.concat(res.data.items)
+    } while (cursor)
+    this.authorIds = members.map(member => member.subject.did)
+  }
 
   async handleEvent(evt: RepoEvent) {
     if (!isCommit(evt)) return
@@ -68,7 +78,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
         return (
           keywords.some((keyword) =>
             create.record.text.toLowerCase().includes(keyword),
-          ) || authorIds.includes(create.author)
+          ) || this.authorIds.includes(create.author)
         )
       })
       .map((create) => {
